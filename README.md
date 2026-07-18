@@ -4,6 +4,12 @@ AarogyaGram is a proof-of-concept Flutter mobile application designed to bridge 
 
 ---
 
+## 📥 Download and Test
+You can download the pre-compiled Android APK directly from this repository to test it on your device:
+*   👉 **[Download AarogyaGram Release APK](https://github.com/jvstin47/AroggyaGram/raw/main/builds/aarogyagram-release.apk)**
+
+---
+
 ## 🌟 Key Features
 
 *   **1-Tap Emergency SOS (Safety-First)**:

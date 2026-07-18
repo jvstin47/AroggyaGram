@@ -28,7 +28,7 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
-  http: ^0.13.6
+  http: ^1.1.0
   flutter:
     sdk: flutter
   geolocator: ^13.0.1
@@ -45,23 +45,9 @@ dependencies:
 
 
 dev_dependencies:
-  flutter_launcher_icons: ^0.13.1
-  flutter_native_splash: ^2.4.0
-  flutter_lints: ^6.0.0   # ✅ CORRECT PLACE
-
-flutter_icons:
-  android: true
-  ios: true
-  image_path: "assets/logo.png"
-
-flutter_native_splash:
-  color: "#F4F7F6"
-  image: assets/logo.png
-  android: true
-  ios: true
+  flutter_lints: ^6.0.0
 
 flutter:
   uses-material-design: true
   assets:
-    - assets/logo.png
     - .env
