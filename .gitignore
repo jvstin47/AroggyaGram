@@ -1,0 +1,34 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.project
+.directory
+
+# Flutter/Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+/build/
+
+# Web related
+doc/api/
+web/assets/packages/
+web/assets/web_entrypoint.dart
+
+# Sensitive files
+.env
+.env.private
+
+# IDEs
+.idea/
+.vscode/
+*.iml

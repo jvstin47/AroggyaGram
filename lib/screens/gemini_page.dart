@@ -1,221 +1,276 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import '../widgets/global_sos_wrapper.dart';
+import 'package:provider/provider.dart';
+import '../theme/app_theme.dart';
+import '../providers/navigation_provider.dart';
+import '../services/gemini_service.dart';
+import '../widgets/neumorphic_container.dart';
+import '../widgets/glass_panel.dart';
 
 class GeminiConsultationPage extends StatefulWidget {
   const GeminiConsultationPage({super.key});
 
   @override
-  State<GeminiConsultationPage> createState() =>
-      _GeminiConsultationPageState();
+  State<GeminiConsultationPage> createState() => _GeminiConsultationPageState();
 }
 
-class _GeminiConsultationPageState
-    extends State<GeminiConsultationPage> {
+class _GeminiConsultationPageState extends State<GeminiConsultationPage> {
+  final TextEditingController _controller = TextEditingController();
+  final GeminiService _geminiService = GeminiService();
+  final List<Map<String, String>> _messages = [];
+  bool _isLoading = false;
 
-  final String apiKey = "AIzaSyAYT3p3j0XEDE5eB0JWTl6clOu6ges0qZM";
-
-  final List<Map<String, String>> _messages = [
-    {
-      "role": "gemini",
-      "text":
-          "Hello, I am your AI health assistant. How are you feeling today?"
-    }
-  ];
-
-  final TextEditingController _chatController =
-      TextEditingController();
-
-  // 🧠 Healthcare prompt builder
-  String buildHealthcarePrompt(String userMessage) {
-    return """
-You are a rural healthcare assistant.
-
-Analyze the user's symptoms and respond STRICTLY in this format:
-
-1. Possible Condition:
-2. Risk Level: (LOW / MEDIUM / HIGH)
-3. Emergency Warning: (only if serious, else say "None")
-4. Advice:
-
-If user writes in Malayalam, reply in Malayalam. Otherwise English.
-
-Keep it short, simple, and helpful.
-
-User symptoms:
-$userMessage
-""";
-  }
-
-  Future<void> _sendMessage() async {
-    if (_chatController.text.trim().isEmpty) return;
-
-    String userMessage = _chatController.text.trim();
+  void _sendMessage() async {
+    final text = _controller.text.trim();
+    if (text.isEmpty) return;
 
     setState(() {
-      _messages.add({"role": "user", "text": userMessage});
-      _messages.add({"role": "gemini", "text": "Typing..."});
+      _messages.add({"role": "user", "text": text});
+      _isLoading = true;
     });
-
-    _chatController.clear();
+    _controller.clear();
 
     try {
-      final response = await http.post(
-        Uri.parse(
-          "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$apiKey",
-        ),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "contents": _messages
-              .where((msg) => msg["text"] != "Typing...")
-              .map((msg) => {
-                    "role":
-                        msg["role"] == "user" ? "user" : "model",
-                    "parts": [
-                      {
-                        "text": msg["role"] == "user"
-                            ? buildHealthcarePrompt(msg["text"]!)
-                            : msg["text"]
-                      }
-                    ]
-                  })
-              .toList(),
-        }),
-      );
-
-      // 🔍 Debug logs
-      print("STATUS: ${response.statusCode}");
-      print("BODY: ${response.body}");
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-
-        if (data["candidates"] != null &&
-            data["candidates"].isNotEmpty) {
-
-          String geminiReply =
-              data["candidates"][0]["content"]["parts"][0]["text"];
-
-          setState(() {
-            _messages.removeLast();
-            _messages.add({
-              "role": "gemini",
-              "text": geminiReply
-            });
-          });
-
-        } else {
-          throw Exception("Empty response");
-        }
-
-      } else {
-        setState(() {
-          _messages.removeLast();
-          _messages.add({
-            "role": "gemini",
-            "text":
-                "API Error: ${response.statusCode}\n${response.body}"
-          });
-        });
-      }
-
+      final response = await _geminiService.generateAdvice(text);
+      setState(() {
+        _messages.add({"role": "model", "text": response ?? "I couldn't process that."});
+      });
     } catch (e) {
       setState(() {
-        _messages.removeLast();
         _messages.add({
-          "role": "gemini",
-          "text": "Error: $e"
+          "role": "model",
+          "text": "Network connection error. If you are experiencing urgent symptoms, please do not wait. Tap the SOS button below immediately to alert your contact, or call emergency services."
         });
       });
+    } finally {
+      setState(() => _isLoading = false);
     }
   }
 
-  // 🎨 Chat bubble UI with emergency highlight
-  Widget _buildMessage(Map<String, String> message) {
-    bool isGemini = message["role"] == "gemini";
-    bool isEmergency = message["text"]!.contains("HIGH") ||
-        message["text"]!.contains("🚨");
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppTheme.background,
+      body: Stack(
+        children: [
+          // Chat ListView
+          ListView(
+            padding: const EdgeInsets.only(
+              top: 110,
+              left: 20,
+              right: 20,
+              bottom: 100, // space for input area
+            ),
+            children: [
+              // Disclaimer Panel
+              GlassPanel(
+                backgroundColor: AppTheme.primaryFixed.withOpacity(0.3),
+                borderColor: AppTheme.primaryFixed,
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    const Icon(Icons.info_outline, color: AppTheme.primary, size: 20),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        "AI consultation provides preliminary guidance only. Always consult a real doctor for medical advice.",
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: AppTheme.primary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              // High Risk Alert
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppTheme.error,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.emergency, color: Colors.white, size: 24),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        "High Risk: Please contact emergency services immediately.",
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
 
-    return Align(
-      alignment:
-          isGemini ? Alignment.centerLeft : Alignment.centerRight,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 5),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isGemini
-              ? (isEmergency
-                  ? Colors.red[100]
-                  : Colors.white)
-              : const Color(0xFF3F77F3),
-          borderRadius: BorderRadius.circular(15),
-          boxShadow: [
-            BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 5)
-          ],
-        ),
-        child: Text(
-          message["text"]!,
-          style: TextStyle(
-            color: isGemini
-                ? Colors.black87
-                : Colors.white,
+              ..._messages.map((m) {
+                final isUser = m["role"] == "user";
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16.0),
+                  child: Align(
+                    alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.8),
+                      child: isUser
+                          ? GlassPanel(
+                              backgroundColor: AppTheme.primaryContainer.withOpacity(0.9),
+                              borderColor: Colors.transparent,
+                              borderRadius: 24,
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              child: Text(
+                                m["text"]!,
+                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                      color: AppTheme.onPrimaryContainer,
+                                    ),
+                              ),
+                            )
+                          : NeumorphicContainer(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              borderRadius: 24,
+                              child: Text(
+                                m["text"]!,
+                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                      color: AppTheme.onSurface,
+                                    ),
+                              ),
+                            ),
+                    ),
+                  ),
+                );
+              }),
+
+              if (_isLoading)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: NeumorphicContainer(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    borderRadius: 24,
+                    child: const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
+                ),
+            ],
           ),
-        ),
+
+          // Custom Top App Bar
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: ClipRRect(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                child: Container(
+                  height: 90,
+                  padding: const EdgeInsets.only(top: 40, left: 20, right: 20),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.65),
+                    border: Border(bottom: BorderSide(color: Colors.black.withOpacity(0.05))),
+                  ),
+                  child: Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () => context.read<NavigationProvider>().pop(),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.arrow_back, color: AppTheme.primary),
+                            const SizedBox(width: 4),
+                            Text(
+                              "BACK",
+                              style: TextStyle(
+                                color: AppTheme.primary,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: AppTheme.secondaryContainer,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.psychology, color: AppTheme.onSecondaryContainer, size: 20),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        "AI Health Consult",
+                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                              color: AppTheme.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // Bottom Input Bar
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: ClipRRect(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.85),
+                    border: Border(top: BorderSide(color: Colors.black.withOpacity(0.05))),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: NeumorphicContainer(
+                          isInset: true,
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                          borderRadius: 24,
+                          child: TextField(
+                            controller: _controller,
+                            decoration: const InputDecoration(
+                              hintText: "Describe your symptoms...",
+                              border: InputBorder.none,
+                            ),
+                            style: Theme.of(context).textTheme.bodyLarge,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      GestureDetector(
+                        onTap: _sendMessage,
+                        child: Container(
+                          width: 48,
+                          height: 48,
+                          decoration: const BoxDecoration(
+                            color: AppTheme.primary,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.send, color: Colors.white),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
-
-@override
-Widget build(BuildContext context) {
-  return GlobalSOSWrapper(
-    child: Scaffold(
-      backgroundColor: Colors.grey[100],
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.all(15),
-                itemCount: _messages.length,
-                itemBuilder: (context, index) {
-                  return _buildMessage(_messages[index]);
-                },
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(15),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _chatController,
-                      decoration: InputDecoration(
-                        hintText: "Describe your symptoms...",
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        filled: true,
-                        fillColor: Colors.white,
-                      ),
-                      onSubmitted: (_) => _sendMessage(),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  FloatingActionButton(
-                    onPressed: _sendMessage,
-                    mini: true,
-                    child: const Icon(Icons.send),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
-}
 }
