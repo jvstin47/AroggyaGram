@@ -1,6 +1,6 @@
 # AarogyaGram 2.0 — Rural Healthcare & Maternal Wellbeing Assistant
 
-AarogyaGram is a proof-of-concept Flutter mobile application designed to bridge healthcare access gaps in rural areas and provide integrated support for maternal emergencies. It leverages the Google Gemini API to provide safety-first, intelligent health guidance, local-language translation, medication tracking, and a robust fail-safe emergency SOS mechanism.
+**AarogyaGram** is an AI-powered rural healthcare and maternal wellbeing mobile app built with Flutter. Designed to bridge the gap in medical access for underserved communities, it features 1-tap emergency SOS, intelligent AI health consultations via the Google Gemini API, local-language medical translation, and an offline-first medication tracker.
 
 ---
 
