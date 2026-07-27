@@ -78,3 +78,8 @@ flutter run
 
 ## 🛡️ Safety Disclaimer
 AarogyaGram is a proof-of-concept system. AI health consultation results are preliminary guides only and do not replace professional clinical diagnoses. In case of serious symptoms, users are instructed to use the SOS utility or call emergency services immediately.
+
+---
+
+## 📄 License
+This project is licensed under the [MIT License](LICENSE).
