@@ -1,5 +1,11 @@
 # AarogyaGram 2.0 — Rural Healthcare & Maternal Wellbeing Assistant
 
+![Flutter](https://img.shields.io/badge/Flutter-%2302569B.svg?style=for-the-badge&logo=Flutter&logoColor=white)
+![Dart](https://img.shields.io/badge/dart-%230175C2.svg?style=for-the-badge&logo=dart&logoColor=white)
+![Google Gemini API](https://img.shields.io/badge/Google_Gemini_API-8E75B2?style=for-the-badge&logo=google&logoColor=white)
+![Android](https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)
+![MIT License](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)
+
 **AarogyaGram** is an AI-powered rural healthcare and maternal wellbeing mobile app built with Flutter. Designed to bridge the gap in medical access for underserved communities, it features 1-tap emergency SOS, intelligent AI health consultations via the Google Gemini API, local-language medical translation, and an offline-first medication tracker.
 
 ---
@@ -81,5 +87,15 @@ AarogyaGram is a proof-of-concept system. AI health consultation results are pre
 
 ---
 
+## 🤝 Contributing
+Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](https://github.com/jvstin47/AroggyaGram/issues) if you want to contribute. Let's make rural healthcare better together!
+
+---
+
 ## 📄 License
 This project is licensed under the [MIT License](LICENSE).
+
+---
+
+## 🏷️ Keywords / Tags
+`Flutter` `Dart` `Rural Healthcare` `Maternal Wellbeing` `Google Gemini API` `AI Health Assistant` `Emergency SOS App` `Medical Translation` `Neumorphic UI` `Medication Tracker` `Android APK` `Open Source`
